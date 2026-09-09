@@ -18,6 +18,12 @@ def create_user(db, name, email, password_hash):
     )
     return cursor.lastrowid
 
+
+def get_user_by_email(db, email):
+    """Retrieves a user from the database by their email address."""
+    return db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+
+
 def init_db():
     """Creates the users and expenses tables if they don't exist."""
     with get_db() as db:
