@@ -1,6 +1,7 @@
-from flask import Flask, render_template, g, request, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
+from flask import Flask, render_template, g, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db as db_get_conn, init_db, seed_db, create_user
+from database import queries
 
 app = Flask(__name__)
 app.secret_key = 'dev-secret-key-for-spendly'
@@ -65,8 +66,21 @@ def register():
     return render_template("register.html")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        db = get_db()
+        user = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+
+        if user and check_password_hash(user['password_hash'], password):
+            session["user_id"] = user['id']
+            return redirect(url_for("profile"))
+
+        return render_template("login.html", error="Invalid email or password")
+
     return render_template("login.html")
 
 
@@ -81,7 +95,16 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = queries.get_user_by_id(user_id)
+    stats = queries.get_summary_stats(user_id)
+    transactions = queries.get_recent_transactions(user_id)
+    breakdown = queries.get_category_breakdown(user_id)
+
+    return render_template("profile.html", user=user, stats=stats, transactions=transactions, breakdown=breakdown)
 
 
 @app.route("/expenses/add")
