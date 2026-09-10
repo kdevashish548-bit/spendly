@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- User Info Section -->
+    <section id="user-info" class="profile-header">
+        <h1 class="hero-title">User Profile</h1>
+        <div class="user-details">
+            <p><strong>Name:</strong> {{ user.name }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Member since:</strong> {{ user.member_since }}</p>
+        </div}
+    </section>
+
+    <hr>
+
+    <!-- Summary Stats Section -->
+    <section id="summary-stats">
+        <h2 class="section-title">Spending Summary</h2>
+        <div class="stats-grid">
+            <div class="stat-card mock-card">
+                <div class="mock-label">Total Spent</div>
+                <div class="mock-total">₹{{ "{:,.2f}".format(stats.total_spent) }}</div>
+            </div>
+            <div class="stat-card mock-card">
+                <div class="mock-label">Transactions</div>
+                <div class="mock-total">{{ stats.transaction_count }}</div>
+            </div>
+            <div class="stat-card mock-card">
+                <div class="mock-label">Top Category</div>
+                <div class="mock-total">{{ stats.top_category }}</div>
+            </div>
+        </div>
+    </section>
+
+    <hr>
+
+    <!-- Transaction History Section -->
+    <section id="transaction-history">
+        <h2 class="section-title">Recent Transactions</h2>
+        {% if transactions %}
+        <div class="table-container">
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th class="text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td>{{ tx.date }}</td>
+                        <td>{{ tx.description }}</td>
+                        <td><span class="category-tag">{{ tx.category }}</span></td>
+                        <td class="text-right amount">₹{{ "{:,.2f}".format(tx.amount) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No transactions found.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <hr>
+
+    <!-- Category Breakdown Section -->
+    <section id="category-breakdown">
+        <h2 class="section-title">Category Breakdown</h2>
+        {% if breakdown %}
+        <div class="breakdown-list">
+            {% for cat in breakdown %}
+            <div class="breakdown-item">
+                <span class="cat-name">{{ cat.name }}</span>
+                <div class="cat-details">
+                    <span class="cat-amount">₹{{ "{:,.2f}".format(cat.amount) }}</span>
+                    <span class="cat-pct">{{ cat.pct }}%</span>
+                </div>
+                <div class="pct-bar-container">
+                    <div class="pct-bar" style="width: {{ cat.pct }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No category data available.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
