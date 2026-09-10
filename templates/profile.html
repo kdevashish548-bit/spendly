@@ -9,31 +9,27 @@
             <p><strong>Name:</strong> {{ user.name }}</p>
             <p><strong>Email:</strong> {{ user.email }}</p>
             <p><strong>Member since:</strong> {{ user.member_since }}</p>
-        </div}
+        </div>
     </section>
-
-    <hr>
 
     <!-- Summary Stats Section -->
     <section id="summary-stats">
         <h2 class="section-title">Spending Summary</h2>
         <div class="stats-grid">
-            <div class="stat-card mock-card">
+            <div class="stat-card">
                 <div class="mock-label">Total Spent</div>
                 <div class="mock-total">₹{{ "{:,.2f}".format(stats.total_spent) }}</div>
             </div>
-            <div class="stat-card mock-card">
+            <div class="stat-card">
                 <div class="mock-label">Transactions</div>
                 <div class="mock-total">{{ stats.transaction_count }}</div>
             </div>
-            <div class="stat-card mock-card">
+            <div class="stat-card">
                 <div class="mock-label">Top Category</div>
                 <div class="mock-total">{{ stats.top_category }}</div>
             </div>
         </div>
     </section>
-
-    <hr>
 
     <!-- Transaction History Section -->
     <section id="transaction-history">
@@ -67,8 +63,6 @@
         </div>
         {% endif %}
     </section>
-
-    <hr>
 
     <!-- Category Breakdown Section -->
     <section id="category-breakdown">
