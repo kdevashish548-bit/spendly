@@ -1,5 +1,5 @@
 from flask import Flask, render_template, g, request, redirect, url_for, flash, session
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db as db_get_conn, init_db, seed_db, create_user
 from database import queries
 
@@ -66,8 +66,21 @@ def register():
     return render_template("register.html")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        db = get_db()
+        user = db.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+
+        if user and check_password_hash(user['password_hash'], password):
+            session["user_id"] = user['id']
+            return redirect(url_for("profile"))
+
+        return render_template("login.html", error="Invalid email or password")
+
     return render_template("login.html")
 
 
