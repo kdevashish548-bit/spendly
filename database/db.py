@@ -44,6 +44,22 @@ def init_db():
         ''')
         db.commit()
 
+def get_sample_expenses():
+    """Returns a list of sample expenses for seeding."""
+    return [
+        ('Food', 'Lunch', 250, '2026-09-01'),
+        ('Transport', 'Metro/Cab', 400, '2026-09-02'),
+        ('Shopping', 'Clothes', 850, '2026-09-03'),
+        ('Bills', 'Electricity/Internet', 2500, '2026-09-04'),
+        ('Entertainment', 'Movie/Concert', 1200, '2026-09-05'),
+        ('Travelling', 'Cab/Trip', 1200, '2026-09-06'),
+        ('Other', 'Miscellaneous', 300, '2026-09-07'),
+        ('Food', 'Dinner', 350, '2026-09-08'),
+        ('Transport', 'Fuel', 1500, '2026-09-09'),
+        ('Shopping', 'Groceries', 750, '2026-09-10'),
+    ]
+
+
 def seed_db():
     """Inserts demo data if the users table is empty."""
     with get_db() as db:
@@ -60,9 +76,8 @@ def seed_db():
         )
         user_id = cursor.lastrowid
 
-        # 8 Sample Expenses covering all categories
-        # Categories: Food, Transport, Bills, Health, Entertainment, Shopping, Other
-        expenses = [
+        # Original sample expenses for the demo user (to maintain test compatibility)
+        original_expenses = [
             (user_id, 15.50, 'Food', '2026-09-01', 'Lunch at Cafe'),
             (user_id, 25.00, 'Transport', '2026-09-02', 'Uber ride'),
             (user_id, 120.00, 'Bills', '2026-09-03', 'Electricity'),
@@ -74,6 +89,29 @@ def seed_db():
         ]
         db.executemany(
             'INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)',
-            expenses
+            original_expenses
         )
         db.commit()
+
+
+def seed_user_expenses(db, user_id):
+    """Seeds sample expenses for a user if they have no expenses."""
+    # Check if the user already has expenses
+    existing_count = db.execute(
+        'SELECT COUNT(*) FROM expenses WHERE user_id = ?', (user_id,)
+    ).fetchone()[0]
+
+    if existing_count > 0:
+        return  # User already has expenses, do nothing
+
+    # Insert sample expenses
+    sample_expenses = get_sample_expenses()
+    expenses_data = [
+        (user_id, amount, category, date, description)
+        for category, description, amount, date in sample_expenses
+    ]
+
+    db.executemany(
+        'INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)',
+        expenses_data
+    )
