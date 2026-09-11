@@ -1,37 +1,126 @@
 {% extends "base.html" %}
+{% block title %}Dashboard — Spendly{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
 
 {% block content %}
 <div class="profile-container">
-    <!-- User Info Section -->
+
+    <!-- ── Header ── -->
     <section id="user-info" class="profile-header">
-        <h1 class="hero-title">User Profile</h1>
-        <div class="user-details">
-            <p><strong>Name:</strong> {{ user.name }}</p>
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>Member since:</strong> {{ user.member_since }}</p>
+        <div class="profile-header-inner">
+            <div class="profile-avatar">{{ user.name[0] | upper }}</div>
+            <div class="profile-header-text">
+                <h1 class="hero-title">Welcome back, {{ user.name }}!</h1>
+                <p class="hero-subtitle">Member since {{ user.member_since }} · {{ user.email }}</p>
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn-logout">Sign out</a>
         </div>
     </section>
 
-    <!-- Summary Stats Section -->
+    <!-- ── KPI stat cards ── -->
     <section id="summary-stats">
-        <h2 class="section-title">Spending Summary</h2>
+        <h2 class="section-title">Overview</h2>
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="mock-label">Total Spent</div>
+
+            <div class="stat-card stat-card--primary">
+                <div class="stat-icon">₹</div>
+                <div class="mock-label">Total Expenses</div>
                 <div class="mock-total">₹{{ "{:,.2f}".format(stats.total_spent) }}</div>
+                <div class="stat-sub">All time</div>
             </div>
+
             <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="mock-label">This Month</div>
+                <div class="mock-total">₹{{ "{:,.2f}".format(monthly_expenses) }}</div>
+                <div class="stat-sub">{{ now_month }}</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">#</div>
                 <div class="mock-label">Transactions</div>
                 <div class="mock-total">{{ stats.transaction_count }}</div>
+                <div class="stat-sub">Total entries</div>
             </div>
+
             <div class="stat-card">
+                <div class="stat-icon">🏆</div>
                 <div class="mock-label">Top Category</div>
-                <div class="mock-total">{{ stats.top_category }}</div>
+                <div class="mock-total cat-pill cat-pill--header">{{ stats.top_category }}</div>
+                <div class="stat-sub">Highest spend</div>
             </div>
+
         </div>
     </section>
 
-    <!-- Transaction History Section -->
+    <!-- ── Insights row ── -->
+    {% if insights %}
+    <section id="insights">
+        <h2 class="section-title">Financial Insights</h2>
+        <div class="insights-grid">
+
+            <div class="insight-card">
+                <div class="insight-label">Avg. Transaction</div>
+                <div class="insight-value">₹{{ "{:,.2f}".format(insights.avg_transaction) }}</div>
+            </div>
+
+            <div class="insight-card">
+                <div class="insight-label">Daily Average</div>
+                <div class="insight-value">₹{{ "{:,.2f}".format(insights.daily_avg) }}</div>
+            </div>
+
+            <div class="insight-card">
+                <div class="insight-label">Most Frequent</div>
+                <div class="insight-value">{{ insights.most_frequent_category }}</div>
+            </div>
+
+            <div class="insight-card">
+                <div class="insight-label">Active Days</div>
+                <div class="insight-value">{{ insights.active_days }}</div>
+            </div>
+
+            {% if insights.highest_expense %}
+            <div class="insight-card insight-card--wide">
+                <div class="insight-label">Biggest Expense</div>
+                <div class="insight-value">
+                    ₹{{ "{:,.2f}".format(insights.highest_expense.amount) }}
+                    <span class="insight-meta"> · {{ insights.highest_expense.description }} ({{ insights.highest_expense.date }})</span>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ── Charts ── -->
+    {% if breakdown %}
+    <section id="charts">
+        <h2 class="section-title">Spending Charts</h2>
+        <div class="charts-grid">
+
+            <div class="chart-card">
+                <h3 class="chart-title">Category Breakdown</h3>
+                <div class="chart-wrapper">
+                    <canvas id="categoryDoughnut"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 class="chart-title">Daily Spending Trend</h3>
+                <div class="chart-wrapper">
+                    <canvas id="dailyTrend"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ── Transaction history ── -->
     <section id="transaction-history">
         <h2 class="section-title">Recent Transactions</h2>
         {% if transactions %}
@@ -48,9 +137,9 @@
                 <tbody>
                     {% for tx in transactions %}
                     <tr>
-                        <td>{{ tx.date }}</td>
+                        <td class="tx-date">{{ tx.date }}</td>
                         <td>{{ tx.description }}</td>
-                        <td><span class="category-tag">{{ tx.category }}</span></td>
+                        <td><span class="category-tag cat-{{ tx.category | lower | replace(' ', '-') }}">{{ tx.category }}</span></td>
                         <td class="text-right amount">₹{{ "{:,.2f}".format(tx.amount) }}</td>
                     </tr>
                     {% endfor %}
@@ -59,34 +148,149 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <p>No transactions found.</p>
+            <div class="empty-icon">📭</div>
+            <p>No transactions yet. Start tracking your expenses to see them here.</p>
+            <a href="{{ url_for('landing') }}" class="btn-primary">Explore Spendly</a>
         </div>
         {% endif %}
     </section>
 
-    <!-- Category Breakdown Section -->
+    <!-- ── Category breakdown ── -->
     <section id="category-breakdown">
-        <h2 class="section-title">Category Breakdown</h2>
+        <h2 class="section-title">Spending by Category</h2>
+        <p class="section-subtitle">Monthly total: ₹{{ "{:,.2f}".format(monthly_expenses) }}</p>
+
         {% if breakdown %}
         <div class="breakdown-list">
             {% for cat in breakdown %}
             <div class="breakdown-item">
-                <span class="cat-name">{{ cat.name }}</span>
-                <div class="cat-details">
-                    <span class="cat-amount">₹{{ "{:,.2f}".format(cat.amount) }}</span>
+                <div class="breakdown-header">
+                    <span class="cat-name">
+                        <span class="cat-dot cat-dot--{{ cat.name | lower | replace(' ', '-') }}"></span>
+                        {{ cat.name }}
+                    </span>
                     <span class="cat-pct">{{ cat.pct }}%</span>
                 </div>
+                <div class="cat-details">
+                    <span class="cat-amount">₹{{ "{:,.2f}".format(cat.amount) }}</span>
+                </div>
                 <div class="pct-bar-container">
-                    <div class="pct-bar" style="width: {{ cat.pct }}%;"></div>
+                    <div class="pct-bar cat-bar--{{ cat.name | lower | replace(' ', '-') }}" style="width: {{ cat.pct }}%;"></div>
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
         <div class="empty-state">
-            <p>No category data available.</p>
+            <div class="empty-icon">📊</div>
+            <p>No category data available yet.</p>
         </div>
         {% endif %}
     </section>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Chart data injected server-side — always the logged-in user's data
+const categoryData = {{ breakdown | tojson }};
+const dailyData    = {{ daily_trend | tojson }};
+
+// ── Category colour map ──
+const CAT_COLORS = {
+  'Food':          '#1a472a',
+  'Transport':     '#c17f24',
+  'Travelling':    '#5b7fa6',
+  'Shopping':      '#8b5e83',
+  'Entertainment': '#c0392b',
+  'Bills':         '#2c7873',
+  'Other':         '#a0a0a0',
+  'Health':        '#e07b39',
+};
+function catColor(name) {
+  return CAT_COLORS[name] || '#888';
+}
+
+// ── Doughnut chart ──
+if (categoryData.length > 0) {
+  const dCtx = document.getElementById('categoryDoughnut').getContext('2d');
+  new Chart(dCtx, {
+    type: 'doughnut',
+    data: {
+      labels: categoryData.map(c => c.name),
+      datasets: [{
+        data: categoryData.map(c => c.amount),
+        backgroundColor: categoryData.map(c => catColor(c.name)),
+        borderWidth: 2,
+        borderColor: '#f7f6f3',
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { padding: 16, font: { family: 'DM Sans', size: 12 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ₹${ctx.parsed.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${categoryData[ctx.dataIndex].pct}%)`
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── Daily trend line chart ──
+if (dailyData.length > 0) {
+  const lCtx = document.getElementById('dailyTrend').getContext('2d');
+  new Chart(lCtx, {
+    type: 'line',
+    data: {
+      labels: dailyData.map(d => d.date),
+      datasets: [{
+        label: 'Daily Spend (₹)',
+        data: dailyData.map(d => d.total),
+        borderColor: '#1a472a',
+        backgroundColor: 'rgba(26,71,42,0.08)',
+        borderWidth: 2,
+        pointBackgroundColor: '#1a472a',
+        pointRadius: 4,
+        fill: true,
+        tension: 0.35,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ₹${ctx.parsed.y.toLocaleString('en-IN', {minimumFractionDigits: 2})}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { font: { family: 'DM Sans', size: 11 }, maxRotation: 45 },
+          grid: { color: '#e4e1da' }
+        },
+        y: {
+          ticks: {
+            font: { family: 'DM Sans', size: 11 },
+            callback: v => '₹' + v.toLocaleString('en-IN')
+          },
+          grid: { color: '#e4e1da' }
+        }
+      }
+    }
+  });
+}
+</script>
 {% endblock %}
