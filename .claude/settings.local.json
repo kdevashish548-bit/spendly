@@ -4,5 +4,8 @@
       "Bash(sqlite3 *)",
       "Bash(python *)"
     ]
+  },
+  "enabledPlugins": {
+    "railway@railway-skills": true
   }
 }
