@@ -171,10 +171,17 @@ def edit_expense(id):
     return "Edit expense — coming in Step 8"
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
 @login_required
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    user_id = session["user_id"]
+    db = get_db()
+    deleted = queries.delete_expense_by_id(id, user_id, db=db)
+    if deleted:
+        flash("Expense deleted successfully!", "success")
+    else:
+        flash("Expense not found or unauthorized.", "error")
+    return redirect(url_for("profile"))
 
 
 @app.route("/logout")

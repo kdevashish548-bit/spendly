@@ -132,6 +132,7 @@
                         <th>Description</th>
                         <th>Category</th>
                         <th class="text-right">Amount</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -141,6 +142,13 @@
                         <td>{{ tx.description }}</td>
                         <td><span class="category-tag cat-{{ tx.category | lower | replace(' ', '-') }}">{{ tx.category }}</span></td>
                         <td class="text-right amount">₹{{ "{:,.2f}".format(tx.amount) }}</td>
+                        <td class="text-center actions-cell">
+                            <form method="POST" action="{{ url_for('delete_expense', id=tx.id) }}" class="inline-form" onsubmit="return confirm('Are you sure you want to delete this expense?');">
+                                <button type="submit" class="btn-delete" title="Delete expense" aria-label="Delete expense">
+                                    🗑️
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
