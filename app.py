@@ -155,6 +155,69 @@ def chart_data():
     return jsonify({"breakdown": breakdown, "daily_trend": daily_trend})
 
 
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_expense(id):
+    """Edit an existing expense."""
+    user_id = session["user_id"]
+    db = get_db()
+
+    if request.method == "POST":
+        # Extract form data
+        amount = request.form.get("amount")
+        category = request.form.get("category")
+        date = request.form.get("date")
+        description = request.form.get("description")
+
+        # Validate all fields are present
+        if not amount or not category or not date or not description:
+            flash("All fields are required", "error")
+            expense = queries.get_expense_by_id(id, user_id, db=db)
+            if not expense:
+                flash("Expense not found or you don't have permission to edit it", "error")
+                return redirect(url_for("profile"))
+            return render_template("edit_expense.html", expense=expense)
+
+        # Validate amount is positive
+        try:
+            amount_float = float(amount)
+            if amount_float <= 0:
+                flash("Amount must be positive", "error")
+                expense = queries.get_expense_by_id(id, user_id, db=db)
+                return render_template("edit_expense.html", expense=expense)
+        except ValueError:
+            flash("Invalid amount", "error")
+            expense = queries.get_expense_by_id(id, user_id, db=db)
+            return render_template("edit_expense.html", expense=expense)
+
+        # Validate category
+        valid_categories = ["Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Travelling", "Other"]
+        if category not in valid_categories:
+            flash("Invalid category", "error")
+            expense = queries.get_expense_by_id(id, user_id, db=db)
+            return render_template("edit_expense.html", expense=expense)
+
+        # Update the expense
+        rows_affected = queries.update_expense(id, user_id, amount_float, category, date, description, db=db)
+
+        if rows_affected == 0:
+            flash("Expense not found or you don't have permission to edit it", "error")
+            return redirect(url_for("profile"))
+
+        db.commit()
+        flash("Expense updated successfully", "success")
+        return redirect(url_for("profile"))
+
+    # GET request - load the expense
+    expense = queries.get_expense_by_id(id, user_id, db=db)
+
+    if not expense:
+        flash("Expense not found or you don't have permission to edit it", "error")
+        return redirect(url_for("profile"))
+
+    return render_template("edit_expense.html", expense=expense)
+
+
 # ------------------------------------------------------------------ #
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
@@ -163,12 +226,6 @@ def chart_data():
 @login_required
 def add_expense():
     return "Add expense — coming in Step 7"
-
-
-@app.route("/expenses/<int:id>/edit")
-@login_required
-def edit_expense(id):
-    return "Edit expense — coming in Step 8"
 
 
 @app.route("/expenses/<int:id>/delete")

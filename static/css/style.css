@@ -315,6 +315,23 @@ a { color: inherit; text-decoration: none; }
     background: rgba(255,255,255,0.25);
 }
 
+.btn-edit {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--accent);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--accent);
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn-edit:hover {
+    background: var(--accent);
+    color: var(--paper);
+}
+
 /* ------------------------------------------------------------------ */
 /* Features section                                                    */
 /* ------------------------------------------------------------------ */

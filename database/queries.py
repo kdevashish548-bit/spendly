@@ -63,7 +63,7 @@ def get_recent_transactions(user_id, limit=10, db=None):
 
 def _get_recent_transactions(db, user_id, limit):
     cursor = db.execute(
-        'SELECT date, description, category, amount FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT ?',
+        'SELECT id, date, description, category, amount FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT ?',
         (user_id, limit)
     )
     return [dict(row) for row in cursor.fetchall()]
@@ -212,3 +212,41 @@ def _get_financial_insights(db, user_id):
         'active_days': active_days,
         'daily_avg': daily_avg,
     }
+
+
+# ------------------------------------------------------------------ #
+# Edit expense queries                                                #
+# ------------------------------------------------------------------ #
+
+def get_expense_by_id(expense_id, user_id, db=None):
+    """Returns a single expense owned by the user."""
+    if db is None:
+        with get_db() as db:
+            return _get_expense_by_id(db, expense_id, user_id)
+    else:
+        return _get_expense_by_id(db, expense_id, user_id)
+
+def _get_expense_by_id(db, expense_id, user_id):
+    row = db.execute(
+        'SELECT id, user_id, amount, category, date, description FROM expenses WHERE id = ? AND user_id = ?',
+        (expense_id, user_id)
+    ).fetchone()
+    if row:
+        return dict(row)
+    return None
+
+
+def update_expense(expense_id, user_id, amount, category, date, description, db=None):
+    """Updates an expense owned by the user. Returns number of rows affected."""
+    if db is None:
+        with get_db() as db:
+            return _update_expense(db, expense_id, user_id, amount, category, date, description)
+    else:
+        return _update_expense(db, expense_id, user_id, amount, category, date, description)
+
+def _update_expense(db, expense_id, user_id, amount, category, date, description):
+    cursor = db.execute(
+        'UPDATE expenses SET amount = ?, category = ?, date = ?, description = ? WHERE id = ? AND user_id = ?',
+        (amount, category, date, description, expense_id, user_id)
+    )
+    return cursor.rowcount

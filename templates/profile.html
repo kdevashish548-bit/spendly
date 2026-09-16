@@ -132,6 +132,7 @@
                         <th>Description</th>
                         <th>Category</th>
                         <th class="text-right">Amount</th>
+                        <th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -141,6 +142,9 @@
                         <td>{{ tx.description }}</td>
                         <td><span class="category-tag cat-{{ tx.category | lower | replace(' ', '-') }}">{{ tx.category }}</span></td>
                         <td class="text-right amount">₹{{ "{:,.2f}".format(tx.amount) }}</td>
+                        <td class="text-right">
+                            <a href="{{ url_for('edit_expense', id=tx.id) }}" class="btn-edit">Edit</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
