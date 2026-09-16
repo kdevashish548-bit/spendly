@@ -5,6 +5,7 @@ from database import queries
 from functools import wraps
 from datetime import datetime
 import sqlite3
+import os
 
 app = Flask(__name__)
 app.secret_key = 'dev-secret-key-for-spendly'
@@ -192,4 +193,5 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=False, host="0.0.0.0", port=port)
