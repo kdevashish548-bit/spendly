@@ -63,7 +63,7 @@ def get_recent_transactions(user_id, limit=10, db=None):
 
 def _get_recent_transactions(db, user_id, limit):
     cursor = db.execute(
-        'SELECT date, description, category, amount FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT ?',
+        'SELECT id, date, description, category, amount FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT ?',
         (user_id, limit)
     )
     return [dict(row) for row in cursor.fetchall()]
@@ -212,3 +212,40 @@ def _get_financial_insights(db, user_id):
         'active_days': active_days,
         'daily_avg': daily_avg,
     }
+
+
+# ------------------------------------------------------------------ #
+# Delete expense functionality                                        #
+# ------------------------------------------------------------------ #
+
+def get_expense_by_id(expense_id, user_id, db=None):
+    """Returns expense details for a specific expense owned by user_id."""
+    if db is None:
+        with get_db() as db:
+            return _get_expense_by_id(db, expense_id, user_id)
+    else:
+        return _get_expense_by_id(db, expense_id, user_id)
+
+def _get_expense_by_id(db, expense_id, user_id):
+    row = db.execute(
+        'SELECT id, amount, category, date, description FROM expenses WHERE id = ? AND user_id = ?',
+        (expense_id, user_id)
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def delete_expense_by_id(expense_id, user_id, db=None):
+    """Deletes an expense if it exists and belongs to user_id. Returns True if deleted."""
+    if db is None:
+        with get_db() as db:
+            return _delete_expense_by_id(db, expense_id, user_id)
+    else:
+        return _delete_expense_by_id(db, expense_id, user_id)
+
+def _delete_expense_by_id(db, expense_id, user_id):
+    cursor = db.execute(
+        'DELETE FROM expenses WHERE id = ? AND user_id = ?',
+        (expense_id, user_id)
+    )
+    db.commit()
+    return cursor.rowcount > 0

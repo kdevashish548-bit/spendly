@@ -5,6 +5,7 @@ from database import queries
 from functools import wraps
 from datetime import datetime
 import sqlite3
+import os
 
 app = Flask(__name__)
 app.secret_key = 'dev-secret-key-for-spendly'
@@ -171,10 +172,17 @@ def edit_expense(id):
     return "Edit expense — coming in Step 8"
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
 @login_required
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    user_id = session["user_id"]
+    db = get_db()
+    deleted = queries.delete_expense_by_id(id, user_id, db=db)
+    if deleted:
+        flash("Expense deleted successfully!", "success")
+    else:
+        flash("Expense not found or unauthorized.", "error")
+    return redirect(url_for("profile"))
 
 
 @app.route("/logout")
@@ -185,4 +193,5 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=False, host="0.0.0.0", port=port)
